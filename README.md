@@ -2,7 +2,7 @@
 
 **Temiz Kurulum Rehberi**
 
-Bu sistem, Oracle PL/SQL kullanılarak geliştirilmiş kapsamlı bir kütüphane otomasyon sistemidir. Tüm veritabanı nesneleri AT_ prefix'i ile özelleştirilmiştir ve ayrı bir kullanıcı schema'sında çalışır.
+Bu sistem, Oracle PL/SQL kullanılarak geliştirilmiş kapsamlı bir kütüphane otomasyon sistemidir. Ayrı bir kullanıcı schema'sında çalışır.
 
 ## 🚀 TEMİZ KURULUM SÜRECİ
 
