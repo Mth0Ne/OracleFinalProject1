@@ -15,7 +15,7 @@ Bu sistem, Oracle PL/SQL kullanılarak geliştirilmiş kapsamlı bir kütüphane
 
 **Bu adım:**
 - `AT_KUTUPHANE` kullanıcısını oluşturur
-- Şifre: `Kutuphane123!`
+- Şifre: `123456`
 - Gerekli tüm yetkileri verir
 
 ### Adım 2: Ana Sistem Kurulumu
