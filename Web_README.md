@@ -48,7 +48,7 @@ wget https://download.oracle.com/otn_software/linux/instantclient/1921000/instan
 ```python
 DB_CONFIG = {
     'user': 'AT_KUTUPHANE',      # Oracle kullanıcı adınız
-    'password': 'kutuphane123',   # Oracle şifreniz
+    'password': '123456',   # Oracle şifreniz
     'dsn': 'localhost:1521/XE'    # Oracle bağlantı string'i
 }
 ```
@@ -167,7 +167,7 @@ GET  /api/stok_sorgula/<id>      # Stok sorgulama
 export LD_LIBRARY_PATH=/opt/oracle/instantclient_19_21:$LD_LIBRARY_PATH
 
 # Veritabanının çalıştığını kontrol edin
-sqlplus AT_KUTUPHANE/kutuphane123@localhost:1521/XE
+sqlplus AT_KUTUPHANE/123456@localhost:1521/XE
 ```
 
 ### Python Modül Hatası:
