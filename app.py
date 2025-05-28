@@ -203,9 +203,8 @@ def uye_ekle():
         if len(ad) > 50 or len(soyad) > 50:
             return jsonify({'success': False, 'error': 'Ad ve soyad 50 karakterden uzun olamaz'}), 400
         
-        # Stored procedure yerine direct insert kullan (daha uyumlu)
-        query = "INSERT INTO AT_UYELER (AD, SOYAD, KAYIT_TARIHI) VALUES (:ad, :soyad, SYSDATE)"
-        execute_query(query, {'ad': ad, 'soyad': soyad}, fetch_all=False)
+        # Prosedür ile üye ekle
+        execute_procedure('AT_YENI_UYE_EKLE', [ad, soyad])
         
         return jsonify({
             'success': True, 
@@ -263,9 +262,8 @@ def kitap_ekle():
             new_total = existing_record['STOK_ADET'] + stok_adedi
             message = f"'{existing_record['KITAP_ADI']}' kitabının stoku {stok_adedi} adet artırıldı (Toplam: {new_total} adet)"
         else:
-            # Yeni kitap ekle
-            insert_query = "INSERT INTO AT_KITAPLAR (KITAP_ADI, YAZAR, STOK_ADET) VALUES (:kitap_adi, :yazar, :stok_adet)"
-            execute_query(insert_query, {'kitap_adi': kitap_adi, 'yazar': yazar, 'stok_adet': stok_adedi}, fetch_all=False)
+            # Prosedür ile yeni kitap ekle
+            execute_procedure('AT_YENI_KITAP_EKLE', [kitap_adi, yazar, stok_adedi])
             message = f"'{kitap_adi}' kitabı başarıyla eklendi ({stok_adedi} adet)"
         
         return jsonify({
@@ -296,27 +294,8 @@ def kitap_odunc_ver():
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Geçersiz ID değerleri'}), 400
         
-        # Üye var mı kontrol et
-        uye_check = execute_query("SELECT UYE_ID FROM AT_UYELER WHERE UYE_ID = :id", {'id': uye_id})
-        if not uye_check:
-            return jsonify({'success': False, 'error': 'Belirtilen üye bulunamadı'}), 404
-        
-        # Kitap var mı ve stokta mı kontrol et
-        kitap_check = execute_query("SELECT STOK_ADET FROM AT_KITAPLAR WHERE KITAP_ID = :id", {'id': kitap_id})
-        if not kitap_check:
-            return jsonify({'success': False, 'error': 'Belirtilen kitap bulunamadı'}), 404
-        
-        if kitap_check[0]['STOK_ADET'] <= 0:
-            return jsonify({'success': False, 'error': 'Kitap stokta yok'}), 400
-        
-        # Ödünç kayıt ekle
-        insert_query = """INSERT INTO AT_ODUNC (UYE_ID, KITAP_ID, ALIS_TARIHI, TESLIM_EDILDI_MI) 
-                         VALUES (:uye_id, :kitap_id, SYSDATE, 'H')"""
-        execute_query(insert_query, {'uye_id': uye_id, 'kitap_id': kitap_id}, fetch_all=False)
-        
-        # Stok azalt
-        update_query = "UPDATE AT_KITAPLAR SET STOK_ADET = STOK_ADET - 1 WHERE KITAP_ID = :id"
-        execute_query(update_query, {'id': kitap_id}, fetch_all=False)
+        # Prosedür ile ödünç ver (prosedür kontrolleri yapacak)
+        execute_procedure('AT_KITAP_ODUNC_VER', [uye_id, kitap_id])
         
         return jsonify({
             'success': True, 
@@ -343,32 +322,8 @@ def kitap_iade():
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Geçersiz ödünç ID'}), 400
         
-        # Ödünç kaydı var mı kontrol et
-        odunc_check = execute_query("""SELECT o.KITAP_ID, o.TESLIM_EDILDI_MI, o.ALIS_TARIHI 
-                                       FROM AT_ODUNC o WHERE o.ODUNC_ID = :id""", {'id': odunc_id})
-        if not odunc_check:
-            return jsonify({'success': False, 'error': 'Belirtilen ödünç kaydı bulunamadı'}), 404
-        
-        if odunc_check[0]['TESLIM_EDILDI_MI'] == 'E':
-            return jsonify({'success': False, 'error': 'Bu kitap zaten iade edilmiş'}), 400
-        
-        # Geç iade kontrolü
-        alis_tarihi = odunc_check[0]['ALIS_TARIHI']
-        gun_farki = (datetime.now() - alis_tarihi).days
-        
-        # İade kayıt güncelle
-        update_query = "UPDATE AT_ODUNC SET IADE_TARIHI = SYSDATE, TESLIM_EDILDI_MI = 'E' WHERE ODUNC_ID = :id"
-        execute_query(update_query, {'id': odunc_id}, fetch_all=False)
-        
-        # Stok artır
-        kitap_id = odunc_check[0]['KITAP_ID']
-        update_stok = "UPDATE AT_KITAPLAR SET STOK_ADET = STOK_ADET + 1 WHERE KITAP_ID = :id"
-        execute_query(update_stok, {'id': kitap_id}, fetch_all=False)
-        
-        # Geç iade ise log kaydet (15 günden fazla)
-        if gun_farki > 15:
-            log_query = "INSERT INTO AT_GEC_IADE_LOG (ODUNC_ID, GEC_IADE_TARIHI) VALUES (:odunc_id, SYSDATE)"
-            execute_query(log_query, {'odunc_id': odunc_id}, fetch_all=False)
+        # Prosedür ile iade et (prosedür kontrolleri yapacak)
+        execute_procedure('AT_KITAP_IADE_ET', [odunc_id])
         
         return jsonify({
             'success': True, 
@@ -392,7 +347,7 @@ def uye_kitap_sayisi(uye_id):
             
         query = """SELECT COUNT(*) as KITAP_SAYISI 
                    FROM AT_ODUNC 
-                   WHERE UYE_ID = :uye_id AND TESLIM_EDILDI_MI = 'H'"""
+                   WHERE UYE_ID = :uye_id AND TESLIM_EDILDI_MI = 'N'"""
         result = execute_query(query, {'uye_id': uye_id})
         
         if result:

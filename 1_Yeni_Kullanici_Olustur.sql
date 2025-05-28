@@ -17,7 +17,7 @@ BEGIN
     DBMS_OUTPUT.PUT_LINE('AT_KUTUPHANE KULLANICISI OLUŞTURULDU!');
     DBMS_OUTPUT.PUT_LINE('==========================================');
     DBMS_OUTPUT.PUT_LINE('Kullanıcı Adı: AT_KUTUPHANE');
-    DBMS_OUTPUT.PUT_LINE('Şifre: Kutuphane123!');
+    DBMS_OUTPUT.PUT_LINE('Şifre: 123456');
     DBMS_OUTPUT.PUT_LINE('==========================================');
     DBMS_OUTPUT.PUT_LINE('SONRAKİ ADIM:');
     DBMS_OUTPUT.PUT_LINE('1. Oracle bağlantınızı kapatın');

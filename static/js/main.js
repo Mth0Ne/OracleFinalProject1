@@ -377,8 +377,8 @@ function renderOduncListesi() {
             <td><small>${odunc.ALIS_TARIHI}</small></td>
             <td><small>${odunc.IADE_TARIHI || '-'}</small></td>
             <td>
-                <span class="badge ${odunc.TESLIM_EDILDI_MI === 'E' ? 'status-returned' : 'status-active'}">
-                    ${odunc.TESLIM_EDILDI_MI === 'E' ? 'Teslim Edildi' : 'Beklemede'}
+                <span class="badge ${odunc.TESLIM_EDILDI_MI === 'Y' ? 'status-returned' : 'status-active'}">
+                    ${odunc.TESLIM_EDILDI_MI === 'Y' ? 'Teslim Edildi' : 'Beklemede'}
                 </span>
             </td>
         </tr>
@@ -594,7 +594,7 @@ function updateStatistics() {
     document.getElementById('totalUyeler').textContent = uyeler.length;
     document.getElementById('totalKitaplar').textContent = kitaplar.length;
     
-    const aktifOdunc = oduncListesi.filter(o => o.TESLIM_EDILDI_MI !== 'E').length;
+    const aktifOdunc = oduncListesi.filter(o => o.TESLIM_EDILDI_MI === 'N').length;
     document.getElementById('aktifOdunc').textContent = aktifOdunc;
     
     document.getElementById('gecIadeCount').textContent = gecIadeLog.length;
