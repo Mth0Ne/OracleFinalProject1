@@ -1,6 +1,6 @@
-# AT Kütüphane Otomasyon Sistemi - Web Arayüzü 📚
+#AT Kütüphane Otomasyon Sistemi - Web Arayüzü
 
-Bu proje, Oracle PL/SQL ile geliştirilmiş AT_KUTUPHANE kütüphane otomasyon sisteminin modern web arayüzüdür. Flask Python framework'ü kullanılarak geliştirilmiştir.
+Bu proje, Oracle PL/SQL ile geliştirilmiş AT_KUTUPHANE kütüphane otomasyon sisteminin modern web arayüzüdür.
 
 ## 🌟 Özellikler
 

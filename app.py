@@ -24,7 +24,6 @@ def init_connection_pool():
     """Oracle bağlantı havuzunu başlat"""
     global pool
     try:
-        # oracledb connection pool oluştur
         pool = oracledb.create_pool(
             user=ORACLE_USER,
             password=ORACLE_PASSWORD,
@@ -86,23 +85,39 @@ def execute_query(query, params=None, fetch_all=True):
             pool.release(connection)
 
 def execute_procedure(proc_name, params):
-    """Stored procedure execution with connection pooling"""
     connection = None
     cursor = None
     try:
+        print(f"🔧 DEBUG: Prosedür çağrılıyor - {proc_name} with params: {params}")
         connection = get_db_connection()
         cursor = connection.cursor()
         
         # Procedure çağır
         result = cursor.callproc(proc_name, params)
         connection.commit()
+        print(f"✅ DEBUG: Prosedür başarılı - {proc_name}")
         return result
         
     except oracledb.DatabaseError as e:
         if connection:
             connection.rollback()
-        print(f"❌ Procedure hatası ({proc_name}): {e}")
-        raise
+        
+        # Hata detaylarını yazdır
+        error_code = e.args[0].code if e.args and hasattr(e.args[0], 'code') else None
+        error_message = str(e.args[0].message) if e.args and hasattr(e.args[0], 'message') else str(e)
+        
+        print(f"❌ DEBUG: Prosedür hatası ({proc_name})")
+        print(f"   Hata Kodu: {error_code}")
+        print(f"   Hata Mesajı: {error_message}")
+        print(f"   Tam Hata: {e}")
+        
+        # Hatayı yeniden fırlat
+        raise e
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"❌ DEBUG: Genel prosedür hatası ({proc_name}): {e}")
+        raise e
     finally:
         if cursor:
             cursor.close()
@@ -111,7 +126,6 @@ def execute_procedure(proc_name, params):
 
 # Cache için optimize edilmiş decorator
 def cache_response(timeout=30):
-    """Response cache decorator"""
     def decorator(f):
         def decorated_function(*args, **kwargs):
             response = f(*args, **kwargs)
@@ -282,6 +296,7 @@ def kitap_odunc_ver():
     """Kitap ödünç ver"""
     try:
         data = request.get_json()
+        print(f"🔧 DEBUG: İstek alındı - data: {data}")
         
         # Server-side validation
         try:
@@ -294,18 +309,62 @@ def kitap_odunc_ver():
         except (ValueError, TypeError):
             return jsonify({'success': False, 'error': 'Geçersiz ID değerleri'}), 400
         
+        print(f"🔧 DEBUG: Validation geçti - uye_id: {uye_id}, kitap_id: {kitap_id}")
+        
         # Prosedür ile ödünç ver (prosedür kontrolleri yapacak)
         execute_procedure('AT_KITAP_ODUNC_VER', [uye_id, kitap_id])
         
+        print(f"✅ DEBUG: Prosedür başarılı tamamlandı")
         return jsonify({
             'success': True, 
             'message': f'Kitap başarıyla ödünç verildi'
         })
+        
     except oracledb.DatabaseError as e:
-        print(f"Ödünç verme DB hatası: {e}")
-        return jsonify({'success': False, 'error': 'Ödünç işlemi gerçekleştirilemedi'}), 500
+        print(f"❌ DEBUG: DatabaseError yakalandı")
+        
+        # Hata detaylarını çıkar
+        if hasattr(e, 'args') and e.args:
+            if hasattr(e.args[0], 'code'):
+                error_code = e.args[0].code
+            else:
+                error_code = None
+                
+            if hasattr(e.args[0], 'message'):
+                error_message = str(e.args[0].message)
+            else:
+                error_message = str(e.args[0]) if e.args else str(e)
+        else:
+            error_code = None
+            error_message = str(e)
+        
+        print(f"   Hata Kodu: {error_code}")
+        print(f"   Hata Mesajı: {error_message}")
+        
+        # Oracle hata kodlarına göre özel mesajlar
+        if error_code == 20001:
+            error_msg = 'Üye bulunamadı!'
+        elif error_code == 20002:
+            error_msg = 'Kitap bulunamadı!'
+        elif error_code == 20003:
+            error_msg = 'Kitap stokta yok!'
+        elif error_code == 20004:
+            # 7 günlük kural hatası - Oracle'dan gelen mesajı temizle
+            error_msg = error_message.replace('ORA-20004: ', '').strip()
+            if not error_msg:
+                error_msg = 'Bu kitabı tekrar alabilmek için 7 gün beklemelisiniz!'
+        else:
+            # Diğer Oracle hataları için genel mesaj
+            error_msg = error_message.replace('ORA-', '').strip() if 'ORA-' in error_message else error_message
+            if not error_msg:
+                error_msg = 'Veritabanı hatası oluştu'
+        
+        print(f"   Temizlenmiş mesaj: {error_msg}")
+        return jsonify({'success': False, 'error': error_msg}), 400
+            
     except Exception as e:
-        print(f"Ödünç verme hatası: {e}")
+        print(f"❌ DEBUG: Genel Exception yakalandı: {e}")
+        print(f"   Exception türü: {type(e)}")
         return jsonify({'success': False, 'error': 'Sistemde bir hata oluştu'}), 500
 
 @app.route('/api/kitap_iade', methods=['POST'])

@@ -401,20 +401,28 @@ async function handleOduncVer(e) {
             kitap_id: formData.get('kitap_id')
         };
         
+        console.log('🔧 DEBUG: Form data:', data);
+        
         if (!data.uye_id || !data.kitap_id) {
             showAlert('Lütfen tüm alanları doldurun', 'warning');
             return;
         }
         
+        console.log('🔧 DEBUG: Sending request to API...');
         const response = await fetch('/api/kitap_odunc_ver', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
         
+        console.log('🔧 DEBUG: Response status:', response.status);
+        console.log('🔧 DEBUG: Response ok:', response.ok);
+        
         const result = await response.json();
+        console.log('🔧 DEBUG: Response JSON:', result);
         
         if (result.success) {
+            console.log('✅ DEBUG: Success case');
             showAlert(result.message, 'success');
             e.target.reset();
             
@@ -426,12 +434,14 @@ async function handleOduncVer(e) {
             await Promise.all([loadOduncListesi(true), loadKitaplar(true)]);
             updateStatistics();
         } else {
-            showAlert(result.error, 'danger');
+            console.log('❌ DEBUG: Error case - showing alert with:', result.error);
+            showAlert(result.error || 'Bilinmeyen bir hata oluştu', 'danger');
         }
     } catch (error) {
-        console.error('Ödünç verme hatası:', error);
+        console.error('❌ DEBUG: Exception caught:', error);
         showAlert('Bağlantı hatası oluştu', 'danger');
     } finally {
+        console.log('🔧 DEBUG: Finally block - resetting button');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
         lucide.createIcons();
@@ -615,6 +625,8 @@ function switchTab(tabName) {
 }
 
 function showAlert(message, type) {
+    console.log(`🔔 DEBUG: showAlert called with message: "${message}", type: "${type}"`);
+    
     // Mevcut alertleri temizle (max 3 alert)
     const existingAlerts = document.querySelectorAll('.alert-dismissible');
     if (existingAlerts.length >= 3) {
@@ -639,6 +651,7 @@ function showAlert(message, type) {
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
     
+    console.log(`🔔 DEBUG: Alert div created and will be added to body`);
     document.body.appendChild(alertDiv);
     
     // Lucide ikonlarını yeniden yükle
@@ -648,6 +661,7 @@ function showAlert(message, type) {
     setTimeout(() => {
         if (alertDiv.parentNode) {
             alertDiv.remove();
+            console.log(`🔔 DEBUG: Alert automatically removed after 5 seconds`);
         }
     }, 5000);
 }
